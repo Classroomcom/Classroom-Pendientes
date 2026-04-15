@@ -1,0 +1,1462 @@
+
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FIVE NIGHTS AT FREDDY'S</title>
+<style>
+:root {
+--crt-flicker: 0.1;
+--main-bg: #050505;
+--ui-color: #e0e0e0;
+--danger-color: #ff3333;
+--accent: #4a90e2;
+}
+
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+user-select: none;
+font-family: 'Courier New', Courier, monospace;
+}
+
+body, html {
+width: 100%;
+height: 100%;
+background-color: #000;
+overflow: hidden;
+color: var(--ui-color);
+}
+
+/* CRT & Realistic Overlay Effects */
+.crt::before {
+content: " ";
+display: block;
+position: absolute;
+top: 0; left: 0; bottom: 0; right: 0;
+background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+z-index: 100;
+background-size: 100% 2px, 3px 100%;
+pointer-events: none;
+}
+
+.crt::after {
+content: " ";
+display: block;
+position: absolute;
+top: 0; left: 0; bottom: 0; right: 0;
+background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.95) 100%);
+z-index: 101;
+pointer-events: none;
+box-shadow: inset 0 0 100px rgba(0,0,0,1);
+}
+
+.screen {
+position: absolute;
+top: 0; left: 0; width: 100%; height: 100%;
+display: none;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+z-index: 50;
+}
+
+.active-screen { display: flex !important; }
+
+/* Main Menu Improved */
+#menu-screen {
+background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.08"/></svg>'), radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+}
+
+#menu-screen h1 {
+font-size: 6vw;
+letter-spacing: 12px;
+text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 2px 2px 0 #000;
+margin-bottom: 20px;
+animation: textFlicker 4s infinite;
+font-weight: 900;
+}
+
+.menu-btn {
+background: rgba(20, 20, 20, 0.6);
+border: 2px solid #333;
+color: var(--ui-color);
+font-size: 24px;
+padding: 15px 40px;
+margin: 10px;
+cursor: pointer;
+transition: 0.3s;
+text-transform: uppercase;
+font-weight: bold;
+box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+
+.menu-btn:hover {
+background: #fff;
+color: #000;
+box-shadow: 0 0 20px #fff;
+border-color: #fff;
+}
+
+/* 3D Office Environment - Enhanced Realism */
+#game-screen {
+perspective: 1000px;
+perspective-origin: center center;
+background: #000;
+}
+
+#office-scene {
+position: absolute;
+top: 0; left: 0;
+width: 100vw;
+height: 100vh;
+transform-style: preserve-3d;
+transform: translateZ(100px);
+transition: transform 0.1s ease-out;
+}
+
+.wall {
+position: absolute;
+background: #111;
+border: 1px solid #050505;
+box-shadow: inset 0 0 200px #000;
+}
+
+/* Realistic textures using complex gradients and SVG noise */
+#front-wall {
+width: 120vw; height: 120vh;
+top: -10vh; left: -10vw;
+transform: translateZ(-600px);
+background: 
+    linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.8)),
+    repeating-linear-gradient(0deg, transparent, transparent 49px, #000 50px),
+    repeating-linear-gradient(90deg, #1f2224, #1f2224 49px, #000 50px),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.6"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.1"/></svg>');
+box-shadow: inset 0 0 300px #000;
+}
+#left-wall {
+width: 800px; height: 120vh;
+top: -10vh; left: -10vw;
+transform: translateX(-400px) translateZ(-200px) rotateY(90deg);
+background: linear-gradient(to right, #000, #15181a);
+}
+#right-wall {
+width: 800px; height: 120vh;
+top: -10vh; right: -10vw;
+transform: translateX(400px) translateZ(-200px) rotateY(-90deg);
+background: linear-gradient(to left, #000, #15181a);
+}
+#floor {
+width: 120vw; height: 800px;
+bottom: -10vh; left: -10vw;
+transform: translateY(400px) translateZ(-200px) rotateX(90deg);
+/* Realistic checkered floor with grunge */
+background: 
+    radial-gradient(circle at center top, rgba(0,0,0,0) 0%, rgba(0,0,0,0.9) 100%),
+    repeating-conic-gradient(#1a1a1a 0% 25%, #2a2a2a 0% 50%) 50% / 120px 120px;
+box-shadow: inset 0 100px 200px rgba(0,0,0,0.95);
+}
+#ceiling {
+width: 120vw; height: 800px;
+top: -10vh; left: -10vw;
+transform: translateY(-400px) translateZ(-200px) rotateX(-90deg);
+background: 
+    radial-gradient(circle, #222, #000),
+    repeating-linear-gradient(90deg, #111, #111 100px, #0a0a0a 100px, #0a0a0a 105px);
+}
+
+.desk {
+position: absolute;
+width: 100vw;
+height: 45vh;
+bottom: -15vh;
+left: 0;
+/* Wood texture */
+background: linear-gradient(to bottom, rgba(0,0,0,0.5), #000), 
+            repeating-linear-gradient(to right, #3e2723, #4e342e 2px, #3e2723 4px);
+transform: translateZ(-250px);
+border-top: 25px solid #2a1a14;
+border-bottom: 5px solid #000;
+box-shadow: 0 -40px 120px rgba(0,0,0,1), inset 0 10px 20px rgba(255,255,255,0.05);
+}
+
+.fan {
+position: absolute;
+width: 140px; height: 140px;
+border-radius: 50%;
+border: 10px solid #222;
+left: 35%; top: -110px;
+background: repeating-conic-gradient(#111 0% 8%, #333 8% 16%);
+animation: spin 0.2s linear infinite;
+box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 0 30px #000, 0 0 15px rgba(0,0,0,0.5);
+}
+
+.fan-base {
+position: absolute;
+width: 40px; height: 60px;
+background: linear-gradient(to right, #222, #111);
+left: 35%; top: -30px; transform: translateX(50px);
+border-radius: 5px;
+box-shadow: 10px 10px 15px rgba(0,0,0,0.8);
+z-index: -1;
+}
+
+.desk-props {
+position: absolute;
+width: 180px; height: 80px;
+background: linear-gradient(135deg, #1a1a1a, #050505);
+right: 25%; top: -40px;
+border-radius: 8px;
+border: 3px solid #333;
+box-shadow: 0 15px 30px rgba(0,0,0,0.9), inset 0 0 15px #000;
+display: flex; justify-content: center; align-items: center;
+color: #f00; font-family: 'Courier New', Courier, monospace; font-size: 28px; font-weight: bold;
+text-shadow: 0 0 15px #f00;
+}
+
+/* NEW: Old Phone on Desk */
+#office-phone {
+position: absolute;
+width: 140px; height: 90px;
+left: 15%; top: -45px;
+transform: rotate(-10deg);
+}
+.phone-base {
+position: absolute;
+bottom: 0; left: 0;
+width: 120px; height: 60px;
+background: linear-gradient(to bottom, #111, #000);
+border-radius: 15px 15px 5px 5px;
+border: 2px solid #222;
+box-shadow: 10px 15px 25px rgba(0,0,0,0.9), inset 0 5px 10px rgba(255,255,255,0.05);
+}
+.phone-dial {
+position: absolute;
+top: 10px; left: 35px;
+width: 40px; height: 40px;
+border-radius: 50%;
+background: #000;
+border: 2px solid #333;
+box-shadow: inset 0 0 10px #000;
+}
+.phone-receiver {
+position: absolute;
+top: -20px; left: -10px;
+width: 140px; height: 35px;
+background: linear-gradient(to right, #050505, #1a1a1a, #050505);
+border-radius: 20px;
+border: 2px solid #222;
+box-shadow: 0 10px 15px rgba(0,0,0,0.8);
+z-index: 2;
+}
+.phone-receiver::before, .phone-receiver::after {
+content: ""; position: absolute;
+width: 35px; height: 45px;
+background: #111;
+border-radius: 10px;
+top: -5px;
+border: 2px solid #222;
+}
+.phone-receiver::before { left: 0; }
+.phone-receiver::after { right: 0; }
+.phone-led {
+position: absolute;
+top: 10px; right: 20px;
+width: 12px; height: 12px;
+border-radius: 50%;
+background: #330000;
+border: 2px solid #111;
+box-shadow: inset 0 2px 5px #000;
+}
+.led-ringing {
+background: #ff0000;
+box-shadow: 0 0 15px #ff0000;
+animation: blink 0.5s infinite;
+}
+.led-active {
+background: #00ff00;
+box-shadow: 0 0 15px #00ff00;
+}
+
+.doorway {
+position: absolute;
+width: 340px;
+height: 680px;
+bottom: 5%;
+background: #000;
+border: 30px solid #0a0a0a;
+box-shadow: inset 0 0 100px #000, 0 0 40px #000;
+border-radius: 10px 10px 0 0;
+}
+#left-doorway { left: 100px; }
+#right-doorway { right: 100px; }
+
+.door {
+position: absolute;
+width: 100%;
+height: 100%;
+/* Realistic metal door */
+background: 
+    linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8)),
+    repeating-linear-gradient(to right, #333 0px, #444 20px, #222 40px);
+top: -100%;
+transition: top 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+border-bottom: 25px solid #222;
+box-shadow: inset 0 -30px 60px rgba(0,0,0,0.9);
+}
+.door::after { /* Door panel details */
+content: ""; position: absolute;
+top: 10%; left: 10%; width: 80%; height: 80%;
+border: 5px solid #111;
+box-shadow: inset 0 0 20px #000;
+}
+.door.closed { top: 0; box-shadow: 0 30px 60px rgba(0,0,0,1), inset 0 -20px 50px rgba(0,0,0,0.9); }
+
+.vent {
+position: absolute;
+width: 260px; height: 160px;
+background: #000;
+border: 15px solid #151515;
+top: 40px; left: calc(50% - 130px);
+display: flex; flex-direction: column; justify-content: space-evenly;
+box-shadow: inset 0 0 80px #000, 0 15px 30px rgba(0,0,0,0.8);
+border-radius: 5px;
+}
+.vent-slat { width: 100%; height: 15px; background: linear-gradient(to bottom, #444, #111); border-bottom: 2px solid #000; }
+
+/* Controls UI */
+.controls-overlay {
+position: absolute;
+top: 0; left: 0; width: 100%; height: 100%;
+z-index: 60;
+pointer-events: none;
+}
+
+.control-panel {
+position: absolute;
+display: flex;
+flex-direction: column;
+gap: 25px;
+pointer-events: auto;
+background: linear-gradient(135deg, rgba(30,30,30,0.9), rgba(10,10,10,0.95));
+padding: 25px;
+border: 4px solid #1a1a1a;
+border-radius: 15px;
+box-shadow: 0 0 40px rgba(0,0,0,1), inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+#left-controls { top: 30%; left: 2%; }
+#right-controls { top: 30%; right: 2%; }
+#vent-controls { top: 20%; left: 50%; transform: translateX(-50%); flex-direction: row; }
+
+.btn-action {
+width: 85px; height: 85px;
+border-radius: 12px;
+border: 6px solid #333;
+background: linear-gradient(135deg, #444, #111);
+color: #888;
+font-weight: 900;
+font-size: 16px;
+cursor: pointer;
+box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 8px 15px rgba(0,0,0,1);
+transition: 0.1s;
+text-shadow: 1px 1px 2px #000;
+}
+.btn-action:active { transform: scale(0.92); box-shadow: none; }
+.btn-door { border-color: #5a0000; }
+.btn-light { border-color: #7a5a00; }
+.btn-vent { width: 180px; height: 60px; border-color: #003a7a; }
+
+.active-btn.btn-door { background: #ff0000 !important; color: #fff !important; box-shadow: 0 0 40px #ff0000 !important; border-color: #ffaaaa !important; }
+.active-btn.btn-light { background: #ffcc00 !important; color: #000 !important; box-shadow: 0 0 40px #ffcc00 !important; border-color: #ffffaa !important; }
+.active-btn.btn-vent { background: #00ccff !important; color: #000 !important; box-shadow: 0 0 40px #00ccff !important; border-color: #aaffff !important; }
+
+.camera-toggle {
+position: absolute;
+bottom: 2%; left: 50%;
+transform: translateX(-50%);
+width: 600px; height: 70px;
+background: linear-gradient(to bottom, rgba(60,60,60,0.9), rgba(20,20,20,0.9));
+border: 4px solid #444;
+color: #fff;
+font-size: 26px;
+font-weight: 900;
+letter-spacing: 5px;
+cursor: pointer;
+pointer-events: auto;
+transition: 0.2s;
+box-shadow: 0 15px 40px rgba(0,0,0,1);
+border-radius: 8px;
+}
+.camera-toggle:hover { background: rgba(100,100,100,0.9); box-shadow: 0 0 50px rgba(255,255,255,0.4); }
+
+/* HUD */
+.hud {
+position: absolute;
+top: 20px; width: 100%;
+display: flex;
+justify-content: space-between;
+padding: 0 50px;
+pointer-events: none;
+z-index: 61;
+font-size: 32px;
+font-weight: 900;
+text-shadow: 4px 4px 8px #000, -1px -1px 0 #000;
+color: #fff;
+}
+.hud-left { display: flex; flex-direction: column; gap: 10px; }
+.hud-right { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+.power-bar { width: 300px; height: 30px; background: #111; border: 4px solid #fff; margin-top: 5px; box-shadow: 0 0 20px #000;}
+.power-fill { width: 100%; height: 100%; background: #2ecc71; transition: width 0.5s; }
+.usage-indicator { display: flex; gap: 12px; margin-top: 8px; }
+.usage-bar { width: 30px; height: 35px; background: #1a1a1a; border: 3px solid #111; border-radius: 4px;}
+.usage-active { background: #2ecc71; box-shadow: 0 0 20px #2ecc71; border-color: #fff; }
+
+/* Camera System */
+#camera-system {
+position: absolute;
+top: 0; left: 0; width: 100%; height: 100%;
+background: #000;
+z-index: 70;
+display: none;
+flex-direction: column;
+}
+
+#cam-canvas {
+width: 100%; height: 100%;
+position: absolute; top:0; left:0;
+filter: grayscale(0.8) contrast(2) brightness(1.1) sepia(0.2);
+}
+
+.cam-overlay {
+position: absolute;
+top: 0; left: 0; width: 100%; height: 100%;
+pointer-events: none;
+background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 2px, transparent 2px, transparent 4px);
+z-index: 71;
+box-shadow: inset 0 0 200px rgba(0,0,0,1);
+}
+
+.cam-ui {
+position: absolute; top: 40px; left: 40px; z-index: 72; font-size: 40px; font-weight: 900; text-shadow: 3px 3px 0 #000; color: #fff;
+}
+.rec { display: inline-block; width: 30px; height: 30px; background: #ff0000; border-radius: 50%; margin-right: 15px; animation: blink 1s infinite; box-shadow: 0 0 20px #ff0000;}
+
+.map-container {
+position: absolute;
+bottom: 50px; right: 50px;
+width: 450px; height: 400px;
+background: rgba(5,5,5,0.95);
+border: 4px solid #fff;
+z-index: 73;
+pointer-events: auto;
+position: relative;
+box-shadow: 0 0 50px rgba(0,0,0,1);
+/* Grid background for map */
+background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+background-size: 20px 20px;
+}
+
+.map-room {
+position: absolute;
+border: 3px solid #555;
+display: flex; justify-content: center; align-items: center;
+cursor: pointer;
+font-size: 18px;
+font-weight: 900;
+color: #777;
+background: rgba(255,255,255,0.05);
+transition: 0.1s;
+}
+.map-room:hover { border-color: #aaa; color: #aaa; background: rgba(255,255,255,0.15); }
+.map-room.active { background: #fff; color: #000; border-color: #fff; box-shadow: 0 0 30px #fff; }
+
+#c1 { top: 5%; left: 30%; width: 40%; height: 20%; }
+#c2 { top: 30%; left: 25%; width: 50%; height: 25%; }
+#c3 { top: 30%; left: 5%; width: 15%; height: 20%; }
+#c4 { top: 60%; left: 25%; width: 15%; height: 25%; }
+#c5 { top: 60%; right: 25%; width: 15%; height: 25%; }
+#c6 { top: 80%; left: 45%; width: 10%; height: 15%; font-size: 14px; }
+
+.map-you {
+position: absolute; bottom: 2%; left: 40%; width: 20%; height: 10%;
+background: rgba(46, 204, 113, 0.4); border: 3px solid #2ecc71;
+display: flex; justify-content: center; align-items: center; font-size: 16px; color: #fff; font-weight: 900;
+box-shadow: 0 0 15px #2ecc71;
+}
+
+.error-message {
+position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+color: #fff; font-size: 80px; font-weight: 900; text-align: center;
+text-shadow: 0 0 40px #fff; display: none; z-index: 75; animation: textFlicker 0.05s infinite; background: #000; width: 100%; padding: 50px;
+}
+
+/* Jumpscare */
+#jumpscare-screen {
+background: #000;
+z-index: 200;
+}
+#jump-canvas { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; filter: contrast(1.8) saturate(1.5); }
+
+/* End Screens */
+.end-text { font-size: 100px; text-align: center; margin-bottom: 20px; font-weight: 900; letter-spacing: 5px; }
+.win-text { color: #fff; text-shadow: 0 0 40px #fff; }
+.lose-text { color: #ff0000; text-shadow: 0 0 40px #ff0000; animation: glitch 0.2s infinite; }
+
+/* Animations */
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes textFlicker {
+0% { opacity: 1; } 3% { opacity: 0.2; } 6% { opacity: 1; }
+7% { opacity: 0.2; } 8% { opacity: 1; } 9% { opacity: 1; }
+10% { opacity: 0.1; } 11% { opacity: 1; } 100% { opacity: 1; }
+}
+@keyframes glitch {
+0% { transform: translate(0) }
+20% { transform: translate(-10px, 10px) }
+40% { transform: translate(-10px, -10px) }
+60% { transform: translate(10px, 10px) }
+80% { transform: translate(10px, -10px) }
+100% { transform: translate(0) }
+}
+@keyframes violentShake {
+0% { transform: translate(0, 0) scale(1) rotate(0deg); filter: invert(0); }
+20% { transform: translate(-30px, 20px) scale(1.1) rotate(-3deg); filter: invert(0.2); }
+40% { transform: translate(30px, -20px) scale(1.1) rotate(3deg); filter: invert(0); }
+60% { transform: translate(-20px, -30px) scale(1.2) rotate(-2deg); filter: invert(0.3); }
+80% { transform: translate(20px, 30px) scale(1.2) rotate(2deg); filter: invert(0); }
+100% { transform: translate(0, 0) scale(1) rotate(0deg); filter: invert(0); }
+}
+
+.shake-active { animation: violentShake 0.08s infinite !important; }
+
+.hallway-light {
+position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+background: radial-gradient(circle at center, rgba(255,255,200, 0.9), rgba(0,0,0,0.95)); display: none; pointer-events: none;
+box-shadow: inset 0 0 150px rgba(0,0,0,1);
+}
+
+.enemy-eyes {
+position: absolute; top: 30%; left: 50%; transform: translateX(-50%);
+width: 220px; height: 240px; display: none; justify-content: center; align-items: center; gap: 40px; z-index: 10;
+/* Realistic Endoskeleton Face Base */
+background:
+radial-gradient(circle at 50% 75%, #050505 12%, transparent 13%),
+radial-gradient(ellipse at 50% 80%, #1a1a1a 38%, transparent 40%),
+radial-gradient(circle at 50% 45%, #2a2a2a 65%, transparent 68%);
+border-radius: 40% 40% 45% 45%;
+box-shadow: inset 0 -30px 60px rgba(0,0,0,1), 0 30px 60px rgba(0,0,0,1);
+filter: drop-shadow(0 0 30px rgba(0,0,0,0.9));
+}
+
+.enemy-eyes::before, .enemy-eyes::after {
+content: ""; position: absolute; top: -20px; width: 65px; height: 65px;
+background: radial-gradient(circle, #333, #000); border-radius: 50%; z-index: -1;
+box-shadow: inset 0 0 20px #000;
+}
+.enemy-eyes::before { left: -15px; }
+.enemy-eyes::after { right: -15px; }
+
+.eye {
+position: relative; top: -25px;
+width: 14px; height: 14px; background: #fff; border-radius: 50%;
+box-shadow: 0 0 25px #fff, 0 0 50px #fff;
+}
+.eye::before {
+content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+width: 55px; height: 55px; background: #000; border-radius: 50%; z-index: -1;
+box-shadow: inset 0 0 15px rgba(255,255,255,0.2);
+border: 2px solid #222;
+}
+
+</style>
+</head>
+<body class="crt" onmousemove="game.mouseMoveHandler(event)">
+
+<div id="menu-screen" class="screen active-screen">
+<h1>FIVE NIGHTS AT FREDDY'S</h1>
+<p style="margin-bottom: 40px; color: #ccc; max-width: 700px; text-align: center; font-size: 20px; line-height: 1.6; text-shadow: 2px 2px 5px #000;">
+Sobrevive desde las 12 AM hasta las 6 AM.<br>Vigila las cámaras y gestiona tu energía.<br>Si se acercan, cierra las puertas. Si están en la ventilación, séllala. No te quedes a oscuras.
+</p>
+<button class="menu-btn" onclick="game.start(1)">Noche 1</button>
+<button class="menu-btn" onclick="game.start(2)">Noche 2</button>
+<button class="menu-btn" onclick="game.start(3)">Noche 3</button>
+<p style="margin-top: 50px; color: #ff3333; font-size: 16px; letter-spacing: 2px; font-weight: bold; animation: blink 2s infinite;">ADVERTENCIA: Este juego contiene luces parpadeantes y ruidos fuertes.</p>
+</div>
+
+<div id="game-screen" class="screen">
+<div id="office-scene">
+<div id="floor" class="wall"></div>
+<div id="ceiling" class="wall"></div>
+<div id="front-wall" class="wall">
+<div class="vent">
+<div class="vent-slat"></div><div class="vent-slat"></div><div class="vent-slat"></div><div class="vent-slat"></div>
+</div>
+</div>
+
+<div id="left-wall" class="wall">
+<div id="left-doorway" class="doorway">
+<div class="hallway-light" id="light-l"></div>
+<div class="enemy-eyes" id="eyes-l"><div class="eye"></div><div class="eye"></div></div>
+<div class="door" id="door-l"></div>
+</div>
+</div>
+
+<div id="right-wall" class="wall">
+<div id="right-doorway" class="doorway">
+<div class="hallway-light" id="light-r"></div>
+<div class="enemy-eyes" id="eyes-r"><div class="eye"></div><div class="eye"></div></div>
+<div class="door" id="door-r"></div>
+</div>
+</div>
+
+<div class="desk">
+<div class="desk-props">00:00 AM</div>
+<div class="fan-base"></div>
+<div class="fan"></div>
+<div id="office-phone">
+    <div class="phone-base">
+        <div class="phone-dial"></div>
+        <div class="phone-led" id="phone-light"></div>
+    </div>
+    <div class="phone-receiver"></div>
+</div>
+</div>
+</div>
+
+<div class="controls-overlay">
+<div id="left-controls" class="control-panel">
+<button class="btn-action btn-door" id="btn-door-l" onmousedown="game.toggleDoor('l')">DOOR</button>
+<button class="btn-action btn-light" id="btn-light-l" onmousedown="game.toggleLight('l')">LIGHT</button>
+</div>
+
+<div id="vent-controls" class="control-panel">
+<button class="btn-action btn-vent" id="btn-vent" onmousedown="game.sealVent()">SEAL VENT</button>
+</div>
+
+<div id="right-controls" class="control-panel">
+<button class="btn-action btn-door" id="btn-door-r" onmousedown="game.toggleDoor('r')">DOOR</button>
+<button class="btn-action btn-light" id="btn-light-r" onmousedown="game.toggleLight('r')">LIGHT</button>
+</div>
+
+<button class="camera-toggle" onmousedown="game.toggleCameras()">[ MONITOR DE SEGURIDAD ]</button>
+</div>
+
+<div class="hud">
+<div class="hud-left">
+<div id="clock">12:00 AM</div>
+<div>Noche <span id="night-display">1</span></div>
+</div>
+<div class="hud-right">
+<div>Energía: <span id="power-text">100</span>%</div>
+<div class="power-bar"><div class="power-fill" id="power-fill"></div></div>
+<div class="usage-indicator" id="usage-bars">
+<div class="usage-bar usage-active"></div>
+<div class="usage-bar"></div>
+<div class="usage-bar"></div>
+<div class="usage-bar"></div>
+<div class="usage-bar"></div>
+</div>
+</div>
+</div>
+
+<div id="camera-system">
+<canvas id="cam-canvas"></canvas>
+<div class="cam-overlay"></div>
+<div class="cam-ui">
+<span class="rec"></span> CAM <span id="current-cam-text">01</span> - <span id="cam-name">STAGE</span>
+</div>
+<div id="cam-error" class="error-message">SIGNAL LOST</div>
+
+<div style="position:absolute; bottom: 50px; left: 50px; pointer-events:auto; z-index: 74;">
+<button class="camera-toggle" style="position:relative; transform:none; left:0; width:400px;" onmousedown="game.toggleCameras()">[ CERRAR MONITOR ]</button>
+</div>
+
+<div class="map-container">
+<div class="map-room active" id="c1" onmousedown="game.switchCam(1)">CAM 01</div>
+<div class="map-room" id="c2" onmousedown="game.switchCam(2)">CAM 02</div>
+<div class="map-room" id="c3" onmousedown="game.switchCam(3)">CAM 03</div>
+<div class="map-room" id="c4" onmousedown="game.switchCam(4)">CAM 04</div>
+<div class="map-room" id="c5" onmousedown="game.switchCam(5)">CAM 05</div>
+<div class="map-room" id="c6" onmousedown="game.switchCam(6)">CAM 06</div>
+<div class="map-you">YOU</div>
+</div>
+</div>
+</div>
+
+<div id="jumpscare-screen" class="screen">
+<canvas id="jump-canvas"></canvas>
+</div>
+
+<div id="victory-screen" class="screen">
+<h1 class="end-text win-text">6:00 AM</h1>
+<h2 style="color:#aaa; margin-bottom: 50px; font-size: 30px;">TURNO FINALIZADO</h2>
+<button class="menu-btn" onclick="game.returnToMenu()">Continuar</button>
+</div>
+
+<div id="gameover-screen" class="screen">
+<h1 class="end-text lose-text">SEÑAL PERDIDA</h1>
+<p style="color:#888; margin-bottom:50px; font-size: 30px;">No sobreviviste a la noche.</p>
+<button class="menu-btn" onclick="game.returnToMenu()">Menú Principal</button>
+</div>
+
+<script>
+// --- AUDIO & VOICE ENGINE ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const AudioEngine = {
+playTone: (freq, type, duration, vol) => {
+if(audioCtx.state === 'suspended') audioCtx.resume();
+const osc = audioCtx.createOscillator();
+const gain = audioCtx.createGain();
+osc.type = type;
+osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+osc.start();
+osc.stop(audioCtx.currentTime + duration);
+},
+playNoise: (duration, vol, filterFreq = 1000) => {
+if(audioCtx.state === 'suspended') audioCtx.resume();
+const bufferSize = audioCtx.sampleRate * duration;
+const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+const data = buffer.getChannelData(0);
+for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+const noise = audioCtx.createBufferSource();
+noise.buffer = buffer;
+
+const filter = audioCtx.createBiquadFilter();
+filter.type = 'lowpass';
+filter.frequency.value = filterFreq;
+
+const gain = audioCtx.createGain();
+gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+noise.connect(filter);
+filter.connect(gain);
+gain.connect(audioCtx.destination);
+noise.start();
+},
+speakVoice: (text, lang, pitch, rate) => {
+if('speechSynthesis' in window) {
+const utterance = new SpeechSynthesisUtterance(text);
+utterance.lang = lang;
+utterance.pitch = pitch;
+utterance.rate = rate;
+window.speechSynthesis.speak(utterance);
+}
+},
+stopVoice: () => {
+if('speechSynthesis' in window) window.speechSynthesis.cancel();
+},
+humOsc: null,
+humGain: null,
+startAmbience: () => {
+if(AudioEngine.humOsc) return;
+AudioEngine.humOsc = audioCtx.createOscillator();
+AudioEngine.humGain = audioCtx.createGain();
+AudioEngine.humOsc.type = 'sine';
+AudioEngine.humOsc.frequency.value = 35; // Deeper bass
+AudioEngine.humGain.gain.value = 0.2;
+AudioEngine.humOsc.connect(AudioEngine.humGain);
+AudioEngine.humGain.connect(audioCtx.destination);
+AudioEngine.humOsc.start();
+},
+stopAmbience: () => {
+if(AudioEngine.humOsc) {
+AudioEngine.humOsc.stop();
+AudioEngine.humOsc = null;
+}
+},
+blip: () => AudioEngine.playTone(900, 'square', 0.1, 0.1),
+thud: () => {
+AudioEngine.playTone(40, 'sine', 0.6, 1.0);
+AudioEngine.playNoise(0.4, 0.4, 200);
+},
+jumpscare: () => {
+AudioEngine.playNoise(3.0, 4.0, 10000); // LOUDER
+AudioEngine.playTone(150, 'sawtooth', 3.0, 1.5);
+AudioEngine.playTone(250, 'square', 3.0, 1.2);
+AudioEngine.playTone(80, 'square', 3.0, 1.5); // BASS
+},
+error: () => AudioEngine.playTone(120, 'sawtooth', 0.5, 0.4),
+alarm: () => {
+AudioEngine.playTone(1000, 'square', 0.2, 0.2);
+setTimeout(() => AudioEngine.playTone(1000, 'square', 0.2, 0.2), 300);
+}
+};
+
+// --- GRAPHICS ENGINE (Canvas 3D Realistic) ---
+const camCanvas = document.getElementById('cam-canvas');
+const ctx = camCanvas.getContext('2d');
+const jumpCanvas = document.getElementById('jump-canvas');
+const jCtx = jumpCanvas.getContext('2d');
+
+function resizeCanvases() {
+camCanvas.width = window.innerWidth;
+camCanvas.height = window.innerHeight;
+jumpCanvas.width = window.innerWidth;
+jumpCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvases);
+resizeCanvases();
+
+const Draw = {
+rect: (x, y, w, h, color) => { ctx.fillStyle = color; ctx.fillRect(x, y, w, h); },
+noise: (context, intensity, width, height) => {
+const imgData = context.getImageData(0, 0, width, height);
+const data = imgData.data;
+for(let i=0; i<data.length; i+=4) {
+if(Math.random() < intensity) {
+const v = Math.random() * 255;
+data[i] = data[i+1] = data[i+2] = v;
+}
+}
+context.putImageData(imgData, 0, 0);
+},
+roomBase: () => {
+// 3D Background with Gradients
+const w = camCanvas.width; const h = camCanvas.height;
+// Back wall
+const backWall = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, w);
+backWall.addColorStop(0, '#222'); backWall.addColorStop(1, '#050505');
+Draw.rect(0, 0, w, h, backWall);
+
+// Ceiling & Floor gradients
+const ceiling = ctx.createLinearGradient(0,0, 0, h/3);
+ceiling.addColorStop(0, '#111'); ceiling.addColorStop(1, 'transparent');
+Draw.rect(0, 0, w, h/3, ceiling);
+
+const floor = ctx.createLinearGradient(0, h, 0, h*2/3);
+floor.addColorStop(0, '#1a1a1a'); floor.addColorStop(1, 'transparent');
+Draw.rect(0, h*2/3, w, h/3, floor);
+
+// Perspective lines
+ctx.strokeStyle = '#000'; ctx.lineWidth = 15;
+ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(w/4, h/4); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(w,0); ctx.lineTo(w*3/4, h/4); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(0,h); ctx.lineTo(w/4, h*3/4); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(w,h); ctx.lineTo(w*3/4, h*3/4); ctx.stroke();
+
+// Inner frame shadow
+ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 30;
+ctx.strokeRect(w/4, h/4, w/2, h/2);
+},
+enemySilhouette: (cContext, scale, offsetX, type, isJump = false) => {
+const cx = (cContext.canvas.width/2) + offsetX;
+const cy = (cContext.canvas.height/2) + (isJump ? 50 : 20);
+
+// NEW VENT ANIMATRONIC DESIGN
+if(type === 'Vent') {
+// Shoulders & Suit
+const suitGrad = cContext.createLinearGradient(cx - 100*scale, cy, cx + 100*scale, cy + 200*scale);
+suitGrad.addColorStop(0, '#1e3799'); suitGrad.addColorStop(1, '#0a1545');
+cContext.fillStyle = suitGrad;
+cContext.beginPath(); cContext.moveTo(cx - 120*scale, cy + 250*scale); cContext.lineTo(cx - 90*scale, cy - 20*scale); cContext.lineTo(cx + 90*scale, cy - 20*scale); cContext.lineTo(cx + 120*scale, cy + 250*scale); cContext.fill();
+
+// Torn suit parts revealing metal
+cContext.fillStyle = '#444';
+cContext.beginPath(); cContext.arc(cx - 60*scale, cy + 80*scale, 20*scale, 0, Math.PI*2); cContext.fill();
+cContext.fillStyle = '#222'; cContext.fillRect(cx - 75*scale, cy + 75*scale, 30*scale, 10*scale); 
+
+// Shirt & Tie
+cContext.fillStyle = '#fff'; cContext.fillRect(cx - 30*scale, cy - 20*scale, 60*scale, 80*scale);
+cContext.fillStyle = '#4a90e2'; cContext.fillRect(cx - 10*scale, cy - 20*scale, 20*scale, 120*scale);
+
+// Head (Bald, greyish skin/metal)
+const headGrad = cContext.createRadialGradient(cx, cy - 100*scale, 10, cx, cy - 100*scale, 70*scale);
+headGrad.addColorStop(0, '#7f8c8d'); headGrad.addColorStop(1, '#111');
+cContext.fillStyle = headGrad;
+cContext.beginPath(); cContext.arc(cx, cy - 110*scale, 65*scale, 0, Math.PI*2); cContext.fill();
+
+// Massive Teeth (Terrifying jaw)
+cContext.fillStyle = '#111'; // Mouth hole
+cContext.fillRect(cx - 50*scale, cy - 65*scale, 100*scale, 45*scale);
+cContext.fillStyle = '#8a0303'; // Bloody gum
+cContext.fillRect(cx - 50*scale, cy - 65*scale, 100*scale, 15*scale);
+cContext.fillStyle = '#dcdde1'; // Sharp Teeth
+for(let i=0; i<8; i++) {
+cContext.beginPath(); cContext.moveTo(cx - 45*scale + (i*12*scale), cy - 50*scale); cContext.lineTo(cx - 40*scale + (i*12*scale), cy - 20*scale); cContext.lineTo(cx - 35*scale + (i*12*scale), cy - 50*scale); cContext.fill();
+}
+
+// Sunglasses
+cContext.fillStyle = '#050505';
+cContext.fillRect(cx - 55*scale, cy - 115*scale, 110*scale, 12*scale); // Frame
+cContext.beginPath(); cContext.arc(cx - 25*scale, cy - 100*scale, 24*scale, 0, Math.PI*2); cContext.fill(); // Left Lens
+cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 100*scale, 24*scale, 0, Math.PI*2); cContext.fill(); // Right Lens
+cContext.fillStyle = '#888'; // reflection
+cContext.beginPath(); cContext.arc(cx - 30*scale, cy - 105*scale, 8*scale, 0, Math.PI*2); cContext.fill();
+cContext.beginPath(); cContext.arc(cx + 20*scale, cy - 105*scale, 8*scale, 0, Math.PI*2); cContext.fill();
+
+// Glowing Red Eyes through glasses
+cContext.fillStyle = '#ff0000';
+cContext.shadowColor = '#ff0000';
+cContext.shadowBlur = 30;
+cContext.beginPath(); cContext.arc(cx - 25*scale, cy - 100*scale, 8*scale, 0, Math.PI*2); cContext.fill();
+cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 100*scale, 8*scale, 0, Math.PI*2); cContext.fill();
+cContext.shadowBlur = 0;
+return;
+}
+
+// Realistic 3D Shading for Main Animatronics
+const mainGrad = cContext.createRadialGradient(cx, cy, 10, cx, cy, 140*scale);
+let eyeColor = '#fff';
+
+if(type === 'Bonnie') { mainGrad.addColorStop(0, '#50509a'); mainGrad.addColorStop(1, '#0a0a1a'); eyeColor = '#ff3366'; }
+else if(type === 'Chica') { mainGrad.addColorStop(0, '#e8c92a'); mainGrad.addColorStop(1, '#3a3005'); eyeColor = '#ff00ff'; }
+else if(type === 'Foxy') { mainGrad.addColorStop(0, '#c22727'); mainGrad.addColorStop(1, '#240202'); eyeColor = '#ffcc00'; }
+else { mainGrad.addColorStop(0, '#754b3e'); mainGrad.addColorStop(1, '#1a0e0a'); } // Freddy
+
+// Metal Endoskeleton Neck
+cContext.fillStyle = '#333';
+cContext.fillRect(cx - 15*scale, cy - 40*scale, 30*scale, 40*scale);
+cContext.fillStyle = '#111';
+for(let i=0; i<3; i++) cContext.fillRect(cx - 15*scale, cy - 35*scale + (i*10*scale), 30*scale, 3*scale);
+
+// Torso Base (Rounded cylinder feel)
+cContext.fillStyle = mainGrad;
+cContext.beginPath(); cContext.ellipse(cx, cy + 60*scale, 75*scale, 80*scale, 0, 0, Math.PI*2); cContext.fill();
+
+// Arms (Jointed)
+cContext.fillStyle = '#222'; // Metal shoulder joints
+cContext.beginPath(); cContext.arc(cx - 95*scale, cy + 10*scale, 15*scale, 0, Math.PI*2); cContext.fill();
+cContext.beginPath(); cContext.arc(cx + 95*scale, cy + 10*scale, 15*scale, 0, Math.PI*2); cContext.fill();
+
+cContext.fillStyle = mainGrad; // Arm blocks
+cContext.beginPath(); cContext.ellipse(cx - 110*scale, cy + 60*scale, 30*scale, 70*scale, 0.2, 0, Math.PI*2); cContext.fill();
+cContext.beginPath(); cContext.ellipse(cx + 110*scale, cy + 60*scale, 30*scale, 70*scale, -0.2, 0, Math.PI*2); cContext.fill();
+
+// Head Base (Sphere feel)
+const headGrad = cContext.createRadialGradient(cx, cy - 90*scale, 10, cx, cy - 90*scale, 70*scale);
+if(type === 'Bonnie') { headGrad.addColorStop(0, '#6060b0'); headGrad.addColorStop(1, '#101020'); }
+else if(type === 'Chica') { headGrad.addColorStop(0, '#f2d438'); headGrad.addColorStop(1, '#453a06'); }
+else if(type === 'Foxy') { headGrad.addColorStop(0, '#d13434'); headGrad.addColorStop(1, '#2e0404'); }
+else { headGrad.addColorStop(0, '#8a5c4c'); headGrad.addColorStop(1, '#21120d'); }
+
+cContext.fillStyle = headGrad;
+cContext.beginPath(); cContext.ellipse(cx, cy - 100*scale, 65*scale, 60*scale, 0, 0, Math.PI*2); cContext.fill();
+
+// Snout / Jaw 3D
+cContext.fillStyle = '#111'; // Open mouth depth
+cContext.fillRect(cx - 40*scale, cy - 60*scale, 80*scale, 30*scale);
+
+// Bottom Jaw
+cContext.fillStyle = headGrad;
+cContext.beginPath(); cContext.ellipse(cx, cy - 35*scale, 50*scale, 20*scale, 0, 0, Math.PI*2); cContext.fill();
+
+// Scary Teeth (Endo teeth + Suit teeth)
+cContext.fillStyle = '#ccc';
+for(let t=0; t<7; t++) {
+    // Top
+    cContext.beginPath(); cContext.moveTo(cx - 35*scale + (t*11*scale), cy - 60*scale); cContext.lineTo(cx - 30*scale + (t*11*scale), cy - 45*scale); cContext.lineTo(cx - 25*scale + (t*11*scale), cy - 60*scale); cContext.fill();
+    // Bottom
+    cContext.beginPath(); cContext.moveTo(cx - 35*scale + (t*11*scale), cy - 35*scale); cContext.lineTo(cx - 30*scale + (t*11*scale), cy - 50*scale); cContext.lineTo(cx - 25*scale + (t*11*scale), cy - 35*scale); cContext.fill();
+}
+
+// Character specific addons
+if(type === 'Bonnie') {
+    // Ears
+    cContext.fillStyle = headGrad;
+    cContext.beginPath(); cContext.ellipse(cx - 35*scale, cy - 180*scale, 15*scale, 40*scale, -0.2, 0, Math.PI*2); cContext.fill();
+    cContext.beginPath(); cContext.ellipse(cx + 35*scale, cy - 180*scale, 15*scale, 40*scale, 0.2, 0, Math.PI*2); cContext.fill();
+} else if (type === 'Foxy') {
+    cContext.fillStyle = '#050505'; // Eyepatch
+    cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 110*scale, 22*scale, 0, Math.PI*2); cContext.fill();
+    cContext.fillRect(cx, cy - 125*scale, 45*scale, 6*scale);
+} else if (type === 'Freddy') {
+    cContext.fillStyle = '#050505'; // Top hat
+    cContext.fillRect(cx - 25*scale, cy - 200*scale, 50*scale, 45*scale);
+    cContext.fillRect(cx - 45*scale, cy - 155*scale, 90*scale, 10*scale);
+    // Highlight on hat
+    cContext.fillStyle = 'rgba(255,255,255,0.1)';
+    cContext.fillRect(cx - 15*scale, cy - 200*scale, 10*scale, 45*scale);
+}
+
+// Eye Sockets Deep shadow
+cContext.fillStyle = '#000';
+cContext.beginPath(); cContext.arc(cx - 25*scale, cy - 110*scale, 20*scale, 0, Math.PI*2); cContext.fill();
+if(type !== 'Foxy') {
+    cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 110*scale, 20*scale, 0, Math.PI*2); cContext.fill();
+}
+
+// Glowing Eyes (LEDs)
+cContext.fillStyle = eyeColor;
+cContext.shadowColor = eyeColor;
+cContext.shadowBlur = isJump ? 50 : 20; // Brighter in jumpscare
+cContext.beginPath(); cContext.arc(cx - 25*scale, cy - 110*scale, 6*scale, 0, Math.PI*2); cContext.fill();
+cContext.fillStyle = '#fff'; // Iris core
+cContext.beginPath(); cContext.arc(cx - 25*scale, cy - 110*scale, 2*scale, 0, Math.PI*2); cContext.fill();
+
+if(type !== 'Foxy') {
+    cContext.fillStyle = eyeColor;
+    cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 110*scale, 6*scale, 0, Math.PI*2); cContext.fill();
+    cContext.fillStyle = '#fff';
+    cContext.beginPath(); cContext.arc(cx + 25*scale, cy - 110*scale, 2*scale, 0, Math.PI*2); cContext.fill();
+}
+cContext.shadowBlur = 0;
+},
+glitchEffect: () => {
+for(let i=0; i<25; i++) {
+const y = Math.random() * camCanvas.height;
+const h = Math.random() * 100;
+ctx.drawImage(camCanvas, 0, y, camCanvas.width, h, (Math.random()-0.5)*50, y, camCanvas.width, h);
+}
+ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.15})`;
+ctx.fillRect(0,0, camCanvas.width, camCanvas.height);
+}
+};
+
+// --- GAME LOGIC ---
+const game = {
+state: 'menu',
+night: 1,
+time: 0,
+power: 100,
+usage: 1,
+
+doors: { l: false, r: false },
+lights: { l: false, r: false },
+ventSealed: false,
+camerasActive: false,
+currentCam: 1,
+camGlitchLevel: 0,
+
+lastTime: 0,
+frameReq: null,
+phoneInterval: null,
+
+ui: {
+powerTxt: document.getElementById('power-text'),
+powerFill: document.getElementById('power-fill'),
+usageBars: document.querySelectorAll('.usage-bar'),
+clock: document.getElementById('clock'),
+deskClock: document.querySelector('.desk-props'),
+office: document.getElementById('office-scene'),
+eyesL: document.getElementById('eyes-l'),
+eyesR: document.getElementById('eyes-r')
+},
+
+ai: [
+{ name: 'Bonnie', type: 'walker', pos: 1, route: [1, 2, 4, 10], timer: 0, maxTimer: 450, aggro: 0 },
+{ name: 'Chica', type: 'walker', pos: 1, route: [1, 2, 5, 11], timer: 0, maxTimer: 500, aggro: 0 },
+{ name: 'Freddy', type: 'walker', pos: 1, route: [1, 2, 5, 11], timer: 0, maxTimer: 700, aggro: 0 },
+{ name: 'Foxy', type: 'runner', pos: 3, route: [3, 4, 10], timer: 0, maxTimer: 800, aggro: 0 },
+{ name: 'Vent', type: 'crawler', pos: 6, route: [6, 12], timer: 0, maxTimer: 1200, aggro: 0, hasSpoken: false }
+],
+
+start: function(nightLvl) {
+AudioEngine.stopVoice();
+if(audioCtx.state === 'suspended') audioCtx.resume();
+this.night = nightLvl;
+document.getElementById('night-display').innerText = this.night;
+
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+document.getElementById('game-screen').classList.add('active-screen');
+document.getElementById('game-screen').classList.remove('shake-active');
+
+this.time = 0;
+this.power = 100;
+this.doors = {l:false, r:false};
+this.lights = {l:false, r:false};
+this.ventSealed = false;
+this.camerasActive = false;
+this.currentCam = 1;
+this.camGlitchLevel = 0;
+this.ai.forEach(e => e.hasSpoken = false);
+this.updateUsage();
+this.updateUI();
+
+document.getElementById('door-l').classList.remove('closed');
+document.getElementById('door-r').classList.remove('closed');
+document.getElementById('btn-door-l').classList.remove('active-btn');
+document.getElementById('btn-door-r').classList.remove('active-btn');
+document.getElementById('btn-light-l').classList.remove('active-btn');
+document.getElementById('btn-light-r').classList.remove('active-btn');
+document.getElementById('light-l').style.display = 'none';
+document.getElementById('light-r').style.display = 'none';
+document.getElementById('camera-system').style.display = 'none';
+document.getElementById('cam-error').style.display = 'none';
+this.ui.eyesL.style.display = 'none';
+this.ui.eyesR.style.display = 'none';
+
+const diffBase = 1 + (this.night * 0.5);
+this.ai[0].aggro = 10 * diffBase;
+this.ai[1].aggro = 8 * diffBase;
+this.ai[2].aggro = (this.night >= 3) ? 12 * diffBase : 0;
+this.ai[3].aggro = (this.night >= 2) ? 15 * diffBase : 0;
+this.ai[4].aggro = 10 * diffBase; 
+
+this.ai.forEach(e => {
+e.pos = e.route[0];
+e.timer = Math.random() * e.maxTimer;
+});
+
+// Lógica de grabación telefónica realista Noche 1
+const pLight = document.getElementById('phone-light');
+pLight.classList.remove('led-ringing', 'led-active');
+if(this.phoneInterval) clearInterval(this.phoneInterval);
+
+if(this.night === 1) {
+    setTimeout(() => {
+        if(this.state !== 'playing' && this.state !== 'cam') return;
+        
+        pLight.classList.add('led-ringing');
+        let rings = 0;
+        
+        this.phoneInterval = setInterval(() => {
+            if(this.state !== 'playing' && this.state !== 'cam') {
+                clearInterval(this.phoneInterval);
+                return;
+            }
+            AudioEngine.playTone(600, 'square', 1.5, 0.1); // Timbre tipo teléfono viejo
+            rings++;
+            
+            if(rings >= 3) {
+                clearInterval(this.phoneInterval);
+                pLight.classList.remove('led-ringing');
+                pLight.classList.add('led-active');
+                
+                // Ruido de estática de fondo para la grabación
+                AudioEngine.playNoise(20, 0.05, 1000); 
+                // "Click" del contestador
+                AudioEngine.playTone(800, 'square', 0.1, 0.2); 
+                
+                setTimeout(() => {
+                    AudioEngine.speakVoice("Uh, ¿hola? ¿Hola, hola? Uh, quería grabar un mensaje para ti para ayudarte a instalarte en tu primera noche... Vigila las cámaras, y no olvides la ventilación. Buena suerte.", "es-ES", 0.8, 0.9);
+                }, 500);
+
+                setTimeout(() => {
+                    pLight.classList.remove('led-active');
+                    AudioEngine.playTone(800, 'square', 0.1, 0.2); // Click de fin
+                }, 18000); // Apaga la luz cuando termina aprox.
+            }
+        }, 3000);
+    }, 3000);
+}
+
+this.state = 'playing';
+this.lastTime = performance.now();
+AudioEngine.startAmbience();
+this.frameReq = requestAnimationFrame(this.loop.bind(this));
+},
+
+toggleDoor: function(side) {
+if(this.power <= 0) return;
+this.doors[side] = !this.doors[side];
+const btn = document.getElementById(`btn-door-${side}`);
+const door = document.getElementById(`door-${side}`);
+if(this.doors[side]) {
+btn.classList.add('active-btn');
+door.classList.add('closed');
+AudioEngine.thud();
+} else {
+btn.classList.remove('active-btn');
+door.classList.remove('closed');
+AudioEngine.blip();
+}
+this.updateUsage();
+},
+
+toggleLight: function(side) {
+if(this.power <= 0) return;
+this.lights[side] = !this.lights[side];
+const btn = document.getElementById(`btn-light-${side}`);
+const light = document.getElementById(`light-${side}`);
+const eyes = side === 'l' ? this.ui.eyesL : this.ui.eyesR;
+
+if(this.lights[side]) {
+btn.classList.add('active-btn');
+light.style.display = 'block';
+AudioEngine.playNoise(0.1, 0.1);
+
+const targetPos = side === 'l' ? 10 : 11;
+const enemyAtDoor = this.ai.find(e => e.pos === targetPos);
+if(enemyAtDoor) {
+eyes.style.display = 'flex';
+AudioEngine.alarm();
+} else {
+eyes.style.display = 'none';
+}
+} else {
+btn.classList.remove('active-btn');
+light.style.display = 'none';
+eyes.style.display = 'none';
+}
+this.updateUsage();
+},
+
+sealVent: function() {
+if(this.power <= 0 || this.ventSealed) return;
+this.ventSealed = true;
+const btn = document.getElementById('btn-vent');
+btn.classList.add('active-btn');
+btn.innerText = "SEALED";
+AudioEngine.thud();
+this.updateUsage();
+
+setTimeout(() => {
+if(this.state !== 'playing' && this.state !== 'cam') return;
+this.ventSealed = false;
+btn.classList.remove('active-btn');
+btn.innerText = "SEAL VENT";
+AudioEngine.blip();
+this.updateUsage();
+}, 8000); 
+},
+
+toggleCameras: function() {
+if(this.power <= 0) return;
+this.camerasActive = !this.camerasActive;
+const camSys = document.getElementById('camera-system');
+if(this.camerasActive) {
+this.state = 'cam';
+camSys.style.display = 'flex';
+AudioEngine.playNoise(0.3, 0.5);
+} else {
+this.state = 'playing';
+camSys.style.display = 'none';
+AudioEngine.playNoise(0.2, 0.3);
+}
+this.updateUsage();
+},
+
+switchCam: function(id) {
+if(this.camGlitchLevel >= 100) return;
+this.currentCam = id;
+document.querySelectorAll('.map-room').forEach(e => e.classList.remove('active'));
+document.getElementById('c'+id).classList.add('active');
+
+const names = {1:'STAGE', 2:'DINING AREA', 3:'PIRATE COVE', 4:'W-HALL', 5:'E-HALL', 6:'VENT'};
+document.getElementById('cam-name').innerText = names[id];
+document.getElementById('current-cam-text').innerText = '0'+id;
+
+AudioEngine.blip();
+AudioEngine.playNoise(0.2, 0.4);
+this.renderCamera();
+Draw.glitchEffect();
+},
+
+updateUsage: function() {
+this.usage = 1;
+if(this.doors.l) this.usage++;
+if(this.doors.r) this.usage++;
+if(this.lights.l) this.usage++;
+if(this.lights.r) this.usage++;
+if(this.ventSealed) this.usage++;
+if(this.camerasActive) this.usage++;
+
+if(this.camGlitchLevel >= 100) this.usage += 3;
+
+this.ui.usageBars.forEach((bar, index) => {
+if(index < this.usage) bar.classList.add('usage-active');
+else bar.classList.remove('usage-active');
+});
+},
+
+mouseMoveHandler: function(e) {
+if(game.state !== 'playing') return;
+const rx = (e.clientX / window.innerWidth - 0.5) * 50;
+const ry = (e.clientY / window.innerHeight - 0.5) * -25;
+game.ui.office.style.transform = `translateZ(100px) rotateY(${rx}deg) rotateX(${ry}deg)`;
+},
+
+loop: function(timestamp) {
+if(this.state !== 'playing' && this.state !== 'cam') return;
+
+const dt = timestamp - this.lastTime;
+this.lastTime = timestamp;
+
+this.time += dt / 1000;
+let hour = Math.floor(this.time / 60);
+let displayTime = hour === 0 ? "12:00 AM" : hour + ":00 AM";
+
+this.ui.clock.innerText = displayTime;
+this.ui.deskClock.innerText = displayTime;
+
+if(hour >= 6) {
+this.triggerWin();
+return;
+}
+
+if(this.power > 0) {
+const drainRate = 0.12 * this.usage; 
+this.power -= (drainRate * dt / 1000);
+if(this.power <= 0) {
+this.power = 0;
+this.triggerPowerOutage();
+}
+this.updateUI();
+}
+
+this.updateAI(dt);
+
+if(this.state === 'cam') this.renderCamera();
+
+this.frameReq = requestAnimationFrame(this.loop.bind(this));
+},
+
+updateUI: function() {
+this.ui.powerTxt.innerText = Math.max(0, Math.floor(this.power));
+this.ui.powerFill.style.width = this.power + "%";
+if(this.power < 20) {
+this.ui.powerFill.style.background = '#ff0000';
+this.ui.powerFill.style.boxShadow = '0 0 20px #ff0000';
+} else {
+this.ui.powerFill.style.background = '#2ecc71';
+this.ui.powerFill.style.boxShadow = 'none';
+}
+},
+
+updateAI: function(dt) {
+this.ai.forEach(e => {
+if(e.aggro === 0) return;
+e.timer += (dt / 100) * (e.aggro / 10);
+
+if(e.timer > e.maxTimer) {
+e.timer = 0;
+const currentIdx = e.route.indexOf(e.pos);
+
+if(currentIdx < e.route.length - 1) {
+e.pos = e.route[currentIdx + 1];
+if(this.camerasActive) AudioEngine.playNoise(0.2, 0.3);
+
+if(e.type === 'crawler' && e.pos === 12 && !e.hasSpoken) {
+AudioEngine.speakVoice("La silla, amigo.", "fr-FR", 0.5, 0.8);
+e.hasSpoken = true;
+}
+} else {
+let blocked = false;
+if(e.pos === 10 && this.doors.l) blocked = true;
+if(e.pos === 11 && this.doors.r) blocked = true;
+if(e.pos === 12 && this.ventSealed) blocked = true;
+
+if(blocked) {
+AudioEngine.thud();
+e.pos = e.route[0];
+e.hasSpoken = false;
+this.power -= 3;
+} else {
+this.triggerJumpscare(e);
+}
+}
+}
+});
+},
+
+renderCamera: function() {
+Draw.roomBase();
+
+let enemiesInRoom = this.ai.filter(e => e.pos === this.currentCam);
+
+enemiesInRoom.forEach((enemy, idx) => {
+Draw.enemySilhouette(ctx, 0.9, (idx * 160) - (enemiesInRoom.length-1)*80, enemy.name);
+});
+
+Draw.noise(ctx, 0.08, camCanvas.width, camCanvas.height);
+if(Math.random() > 0.9) Draw.glitchEffect();
+},
+
+triggerJumpscare: function(killer) {
+this.state = 'jumpscare'; 
+AudioEngine.stopAmbience();
+AudioEngine.stopVoice();
+AudioEngine.jumpscare();
+
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+const jumpScreen = document.getElementById('jumpscare-screen');
+jumpScreen.classList.add('active-screen');
+
+// AÑADIDO: Sacudida violenta del contenedor completo
+document.getElementById('game-screen').classList.add('shake-active');
+
+let scale = 1.8;
+let glitchOffset = 0;
+
+const animateJump = () => {
+if(this.state !== 'jumpscare') return;
+
+jCtx.clearRect(0, 0, jumpCanvas.width, jumpCanvas.height);
+
+glitchOffset = (Math.random() - 0.5) * 100; // Sacudida intensa interna
+
+jCtx.save();
+jCtx.translate(glitchOffset, glitchOffset);
+
+Draw.enemySilhouette(jCtx, scale, 0, killer.name, true);
+Draw.noise(jCtx, 0.5, jumpCanvas.width, jumpCanvas.height); // Más ruido
+
+jCtx.restore();
+
+// Flashes rojos aleatorios en el jumpscare
+if(Math.random() > 0.8) {
+    jCtx.fillStyle = 'rgba(255,0,0,0.3)';
+    jCtx.fillRect(0,0, jumpCanvas.width, jumpCanvas.height);
+}
+
+scale += 0.4; // Se acerca más rápido
+if(scale < 12) {
+requestAnimationFrame(animateJump);
+} else {
+setTimeout(() => this.triggerGameOver(), 300);
+}
+};
+
+requestAnimationFrame(animateJump);
+},
+
+triggerPowerOutage: function() {
+this.power = 0;
+this.doors.l = false; this.doors.r = false;
+this.lights.l = false; this.lights.r = false;
+this.ventSealed = false;
+if(this.camerasActive) this.toggleCameras();
+this.updateUI();
+
+AudioEngine.playTone(80, 'sawtooth', 2.0, 1.0);
+AudioEngine.stopAmbience();
+
+setTimeout(() => {
+if(this.state === 'playing') {
+const killer = this.ai.find(e => e.name === 'Freddy') || this.ai[0];
+this.triggerJumpscare(killer);
+}
+}, 5000 + Math.random() * 5000);
+},
+
+triggerWin: function() {
+this.state = 'win';
+AudioEngine.stopAmbience();
+AudioEngine.stopVoice();
+AudioEngine.playTone(500, 'sine', 4, 0.8);
+AudioEngine.playTone(600, 'sine', 4, 0.5);
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+document.getElementById('game-screen').classList.remove('shake-active');
+document.getElementById('victory-screen').classList.add('active-screen');
+},
+
+triggerGameOver: function() {
+this.state = 'gameover';
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+document.getElementById('game-screen').classList.remove('shake-active');
+document.getElementById('gameover-screen').classList.add('active-screen');
+},
+
+returnToMenu: function() {
+this.state = 'menu';
+document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+document.getElementById('game-screen').classList.remove('shake-active');
+document.getElementById('menu-screen').classList.add('active-screen');
+}
+};
+
+</script>
+</body>
+</html>
